@@ -6,6 +6,7 @@ import store from "./store/store";
 import MainContainer from "../src/components/MainContainer";
 import { RouterProvider, createBrowserRouter } from "react-router-dom";
 import WatchPage from "./components/WatchPage";
+import Watch from "../src/components/Watch";
 function App() {
   const appRouter = createBrowserRouter([
     {
@@ -19,6 +20,10 @@ function App() {
         {
           path: "/watch",
           element: <WatchPage />,
+        },
+        {
+          path: "/watches",
+          element: <Watch />,
         },
       ],
     },

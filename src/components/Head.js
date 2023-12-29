@@ -1,11 +1,49 @@
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { toggleMenu } from "../store/appSlice";
+import { cacheResults } from "../store/searchSlice";
+import { useEffect, useState } from "react";
+import { YOUTUBE_API_SUGGEST } from "../utils/constants";
+
 const Head = () => {
+  const [searchQuery, setSearchQuery] = useState("");
+  const [suggestions, setSuggestions] = useState([]);
+  const [showSuggestions, setShowSetSuggestions] = useState(false);
+  const cachedData = useSelector((store) => store.search);
   const dispatch = useDispatch();
 
   const toggleMenuHandler = () => {
     dispatch(toggleMenu());
   };
+
+  const handleChange = (e) => {
+    setSearchQuery(e.target.value);
+  };
+
+  useEffect(() => {
+    // console.log("API Call - ", searchQuery);
+    let timer;
+    timer = setTimeout(() => {
+      if (cachedData[searchQuery]) {
+        setSuggestions(cachedData[searchQuery]);
+      } else {
+        getSearchSuggestion();
+      }
+    }, 200);
+    return () => {
+      clearTimeout(timer);
+    };
+  }, [searchQuery]);
+
+  const getSearchSuggestion = async () => {
+    const response = await fetch(
+      "https://corsproxy.org/?" +
+        encodeURIComponent(YOUTUBE_API_SUGGEST + searchQuery)
+    );
+    const json = await response.json();
+    setSuggestions(json[1]);
+    dispatch(cacheResults({ [searchQuery]: json[1] }));
+  };
+
   return (
     <div className="grid grid-flow-col p-5 m-2 shadow sticky top-0 z-10 ">
       <div className="flex  ">
@@ -23,6 +61,10 @@ const Head = () => {
       </div>
       <div className="col-span-10 px-10">
         <input
+          onChange={(e) => handleChange(e)}
+          onFocus={() => setShowSetSuggestions(true)}
+          onBlur={() => setShowSetSuggestions(false)}
+          value={searchQuery}
           type="text"
           placeholder="Search"
           className="w-1/2 border border-gray-400 p-2 rounded-l-full"
@@ -30,6 +72,20 @@ const Head = () => {
         <button className="border border-gray-400 p-2 rounded-r-full px-2 bg-gray-100">
           🔍
         </button>
+        {showSuggestions && (
+          <div className="fixed px-2 py-2  bg-white w-[37rem]  border-gray-300 shadow-sm rounded-lg">
+            <ul>
+              {suggestions.map((sugg) => (
+                <li
+                  className="px-5 py-2 shadow-sm hover:bg-gray-100"
+                  key={sugg}
+                >
+                  {sugg}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
       </div>
       <div className="col-span-1">
         <img
